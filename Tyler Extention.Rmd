@@ -1,0 +1,182 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+Given a currsory analises of the data we see that both the race of the mother and the race of the father appears to be corrilated with baby weight. We also know that smoking is corrilated with race, it is very posible that race is a confounding variable.
+In the data given to us values 1-5 specfy different types of white so we will create a dummy varable where all values for race 1-5 are maped to white 6 is maped mex 7 is maped to black and 8 is maped to asian. 9 and 99 refer to mothers of mixed race and unknown race respectivly. Since mixed race is does not differentiate between different racial mixes as a catagory it is not useful for this analises. So we remove both.
+```{r}
+data_race = data
+F <- function(x) if (x<=5) "white" else if (x == 6) "mex" else if (x == 7) "black" else if (x == 8) "asian"
+mother_race <- unlist(lapply(data$race, F))
+```
+
+```{r}
+Remove9and99 = function(toRemove, from) from[toRemove < 9]
+
+wt_mother_race = Remove9and99(data_race$race, data_race$wt)
+```
+
+To get a sence of the data we will show a box plot.
+```{r}
+boxplot(wt_mother_race~mother_race,xlab="mothers race",ylab="baby wieght")
+```
+It is unclear if there is a meaningfull difference in means so we will run an anova test. I chose to use anova to test whether race has a statisticaly significan efect on baby whieght beocuse it can determin if several catagories have statisticaly different means. Anova has 3 assumption Independence of cases, normality, homoscedasticity.
+Inorder to conferm these assumption
+
+Independence of cases means that each measurment is independent of the other, we can not test this but we can assume it by assuming that the data was well colected.
+
+Normality of the Residuals means that the distribution of the residuals are normal.
+First we calculate the residuals
+```{r}
+asian_residuals = wt_mother_race[mother_race == 'asian'] - mean(wt_mother_race[mother_race == 'asian'])
+hist(asian_residuals)
+```
+```{r}
+white_residuals = wt_mother_race[mother_race == 'white'] - mean(wt_mother_race[mother_race == 'white'])
+hist(white_residuals)
+```
+```{r}
+qqnorm(white_residuals);qqline(white_residuals, col = 2)
+```
+
+```{r}
+black_residuals = wt_mother_race[mother_race == 'black'] - mean(wt_mother_race[mother_race == 'black'])
+hist(black_residuals)
+```
+```{r}
+qqnorm(black_residuals);qqline(black_residuals, col = 2)
+```
+
+```{r}
+mex_residuals = wt_mother_race[mother_race == 'mex'] - mean(wt_mother_race[mother_race == 'mex'])
+hist(mex_residuals)
+```
+```{r}
+qqnorm(mex_residuals);qqline(mex_residuals, col = 2)
+```
+
+Looking at the histograms and the qqnorm plots all of the distrebutions appear normal.
+
+Homoscedasticity means that all the variences are the same. While this is clearly not true based upon the box plots. However it is established that anova is robust provided that the larges  varience is no more than 4 times the smallest varience which is true.
+
+```{r}
+summary(aov(wt_mother_race~mother_race))
+```
+Becouse of the extreemly low p value mothers race appears to be significant.
+
+We do the same for the fathers race
+```{r}
+fathers_race <- unlist(lapply(data$drace, F))
+```
+
+```{r}
+Remove9and99 = function(toRemove, from) from[toRemove < 9]
+
+wt_fathers_race = Remove9and99(data_race$drace, data_race$wt)
+```
+To get a sence of the data we will show a box plot.
+```{r}
+boxplot(wt_fathers_race~fathers_race,xlab="fathers race",ylab="baby wieght")
+```
+```{r}
+summary(aov(wt_fathers_race~fathers_race))
+```
+
+As we would expect the fathers race is also relevent. We expect that the mechanism for this is genetic differences in the child. Idealy we would like to test the race of the child. We can do this by removing the babies of mixed parentage.
+```{r}
+getBabyRace = function(x,y) if ((x == y) && (x < 9) && (y < 9)) F(x)
+baby_race <- unlist(mapply(getBabyRace, data$race, data$drace))
+
+#remove unsessasary mother race info
+wt_race = data$wt[data$race < 9]
+drace = data$drace[data$race < 9]
+mrace = data$race[data$race < 9]
+
+#remove unsessasary father race info
+wt_race = wt_race[drace < 9]
+mrace = mrace[drace < 9]
+drace = drace[drace < 9]
+
+wt_race = wt_race[drace == mrace]
+```
+To get a sence of the data we will show a box plot.
+```{r}
+boxplot(wt_race~baby_race,xlab="baby race",ylab="baby wieght")
+```
+
+```{r}
+summary(aov(wt_race~baby_race))
+```
+
+The increase in p value is due to the decrease in sample size as shown by taking a random sample of mother and father race data sets and finding their p value. As shown by:
+```{r}
+summary(aov(sample(wt_fathers_race, length(wt_race))~sample(fathers_race, length(baby_race))))
+```
+
+```{r}
+summary(aov(sample(wt_mother_race, length(wt_race))~sample(mother_race, length(baby_race))))
+```
+
+--------------------------------------------------------------------------------------------------------------------------
+By multiple metrics race seems to be corrilated with baby weight. Now we will test whether race is corrilated with smoking in our data.
+In order to determin this we need a sensable metric for smoking. This data set breaks the smoking data into 3 columns. A binary varable that determins whether a person has smoked. A time variable that determins how long ago a person quit if they formerly smoked. And a number varable which is how many cigarets the indevidual smokes per day. Idealy I would use use the number column for only current and never smokers to maintain the numerical status of the smoking data. However this data is not normal.
+```{r}
+smokedOrNo = data$smoke < 2
+```
+We then construct race variables that include only never and current smokers.
+```{r}
+getBabyRace = function(x,y) if ((x == y) && (x < 9) && (y < 9)) F(x)
+baby_race <- unlist(mapply(getBabyRace, data$race[smokedOrNo], data$drace[smokedOrNo]))
+
+#remove uncertain smokers
+smoke = data$number[smokedOrNo]
+smokeBinary = data$smoke[smokedOrNo]
+drace = data$drace[smokedOrNo]
+mrace = data$race[smokedOrNo]
+
+#remove unsessasary mother race info
+smoke = smoke[mrace < 9]
+smokeBinary = smokeBinary[mrace < 9]
+drace = drace[mrace < 9]
+mrace = mrace[mrace < 9]
+
+#remove unsessasary father race info
+smoke = smoke[drace < 9]
+smokeBinary = smokeBinary[drace < 9]
+mrace = mrace[drace < 9]
+drace = drace[drace < 9]
+
+smoke_race = smoke[drace == mrace]
+smokeBinary = smokeBinary[drace == mrace]
+```
+We run a box plot to visualise said data
+```{r}
+boxplot(smoke_race~baby_race,xlab="baby race",ylab="number cigs")
+```
+
+So instead I will use simply use the chi squared test to compair race to smoking while pregnent or never smoking.
+The assumptions of chi squared is Independence and Sample Size
+
+Independence is assumed as explaned above.
+
+Sample Size must be larger than 30 which is true for all of them.
+
+
+```{r}
+tbl = table(smokeBinary,baby_race)
+tbl
+chisq.test(tbl) 
+```
+
+While less significant than the relation ship between race and baby weight it is still very significant at p<.05.
+Therefor it is posible for race to be a confounding variable.
+
+
+
+
+
+
+
+
