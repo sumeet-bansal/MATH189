@@ -1,0 +1,98 @@
+## Compare the frequency, or incidence, of low-birth-weight babies for the two groups. How reliable do you think your estimates are? That is, how would the incidence of low birth weight change if a few more or fewer babies were classified as low birth weight?
+
+### Set Up
+The given data is loaded:
+
+```{r}
+data <- read.table("babies.txt", header=TRUE)
+```
+
+The reason for loading the simplified 'babies.txt' is that the more complex dataset contains miscellaneous data unrelated to simple calculations of frequency. All that is required for these calculations is data on birth weights and whether the mother smoked or not--the simplified 'babies.txt' fulfills both requirements.
+
+### Basic Analysis
+The frequency of low-birth-weight babies for smoking versus nonsmoking mothers can be calculated by splitting the data into separate tables for smoking and nonsmoking mothers:
+
+```{r}
+smokers <- data[data$smoke == 1,]
+nonsmokers <- data[data$smoke == 0,]
+```
+
+The frequency for each group can be calculating by dividing the number of low birth weights in the group by the total number of birth weights in the group. The World Health Organization (WHO) defines a low birth weight as less than 2,500 grams (89 ounces):
+
+```{r}
+lowbwt <- 89
+```
+
+For smoking mothers:
+
+```{r}
+length(smokers$bwt[smokers$bwt < lowbwt])
+length(smokers$bwt)
+length(smokers$bwt[smokers$bwt < lowbwt]) / length(smokers$bwt)
+```
+
+For nonsmoking mothers:
+
+```{r}
+length(nonsmokers$bwt[nonsmokers$bwt < lowbwt])
+length(nonsmokers$bwt)
+length(nonsmokers$bwt[nonsmokers$bwt < lowbwt]) / length(nonsmokers$bwt)
+```
+
+Comparing these numbers, there's a marked difference in the frequency of low birth weights for smoking versus nonsmoking mothers: mothers who smoke have a significantly higher frequency of low birth weights (8.26%) than mothers who do not smoke (3.10%).
+
+### Determining Reliability
+The reliability of these estimates can be approximating by looking at how "stable" a threshold for low birth weights the currently accepted value is, i.e. how much or how little the calculated frequencies change when the threshold is shifted a few ounces lower or higher. One method for checking the stability is graphing the relationship between the threshold for low birth weight and the frequency of low birth weights (dependent on the value of that threshold). If the frequency noticeably changes around the current accepted threshold, then that means the frequency calculations are not very reliable since a small shift in the value of the threshold can significantly affect the frequency. On the other hand, if the frequency does not change noticeably around the current accepted threshold, that means a small shift in the value of the threshold cannot significantly affect the frequency, ensuring that the frequency is fairly "stable" and reliable.
+
+To generate these graphs, each weight is treated as if it is the threshold, and the frequency of low birth weights given that weight is calculated.
+
+### For Smokers
+The graph of frequencies versus thresholds for smokers:
+
+```{r}
+weights <- seq(min(smokers$bwt), max(smokers$bwt))
+freqs <- c()
+for (i in 1:length(weights)) { freqs[i] <- length(which(smokers$bwt < weights[i]))/length(smokers$bwt) }
+plot(weights, freqs, type='l', main="Frequencies of Low Birth Weight for Babies Born to Smokers", xlab="Threshold for Low Birth Weight", ylab="Frequency for Threshold")
+remove(i)
+```
+
+The slope around the current accepted threshold is moderately flat but does rise slightly, implying that the frequency could noticeably change if the threshold was lowered or raised. Therefore, the calculated frequency is not entirely reliable. The slope is fairly linear around the accepted threshold however, and much closer to 0 than the slope at other points in the graph (e.g. between 100 and 120, when the slope drastically rises), however, implying some moderate level of stability.
+
+Measuring reliability by the change in frequency (i.e. slope) can be more explicitly shown through the derivative of the graph. A close approximation for the derivative is the change in frequency at each step:
+
+```{r}
+deltas <- c()
+for (i in 1:length(weights)-1) { deltas[i] <- freqs[i+1] - freqs[i] }
+plot(weights[1:length(weights)-1], deltas, type='p', main="Deltas of Frequencies of Low Birth Weights for Babies Born to Smokers", xlab="Threshold for Low Birth Weight", ylab="Delta of Frequencies for Consecutive Birth Weights")
+remove(i)
+```
+
+This graph shows how drastic the change in frequency is, given a threshold. It is evident that the current threshold is much more stable and reliable than other weights in the graph since the frequency deltas are much smaller for the current threshold than the points for other birth weights, but still has some level of unreliability since the delta exists and is non-negligible.
+
+### For Non-Smokers
+The graph of frequencies versus thresholds for nonsmokers:
+
+```{r}
+weights <- seq(min(nonsmokers$bwt), max(nonsmokers$bwt))
+freqs <- c()
+for (i in 1:length(weights)) { freqs[i] <- length(which(nonsmokers$bwt < weights[i]))/length(nonsmokers$bwt) }
+plot(weights, freqs, type='l', main="Frequencies of Low Birth Weight for Babies born to Non-Smokers", xlab="Threshold for Low Birth Weight", ylab="Frequency for Threshold")
+remove(i)
+```
+
+The slope around the current accepted threshold for the graph of frequencies versus thresholds for non-smokers is much closer to 0 than the slope around the current accepted threshold for the graph for smokers, i.e. the calculated frequency is much more reliable for non-smokers than it is for smokers.
+
+The graph of deltas of frequencies versus thresholds for non-smokers:
+
+```{r}
+deltas <- c()
+for (i in 1:length(weights)-1) { deltas[i] <- freqs[i+1] - freqs[i] }
+plot(weights[1:length(weights)-1], deltas, type='p', main="Deltas of Frequencies of Low Birth Weights for Babies Born to Non-Smokers", xlab="Threshold for Low Birth Weight", ylab="Delta of Frequencies for Consecutive Birth Weights")
+remove(i)
+```
+
+Just like the previous graph of the frequency deltas, this graph shows how drastic the change in frequency is, given a threshold. Even more so than the previous graph for smokers however, the current threshold is much more stable and reliable than other weights in teh graph since the deltas are much smaller, indicating that the frequency does not change much if the threshold for low birth weight is shifted left or right--in this way, it is "stable" since a change of a few ounces will not dramatically change the frequency and lead to completely different results. In fact, for this graph, the delta around the current accepted threshold is very close to 0, implying a high level of reliability for the calculated frequency.
+
+### Conclusion
+The slopes around the current accepted threshold is close to 0 for the data for both smokers and non-smokers, implying some level of reliability when calculating frequencies. The calculated frequency for non-smokers is much more reliable than the frequency for smokers however, since the frequency changes are not as drastic for the values around the current threshold for non-smokers as they are for the smokers.
