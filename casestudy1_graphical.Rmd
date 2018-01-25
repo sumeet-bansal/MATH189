@@ -1,0 +1,115 @@
+---
+title: "Graphical Methods"
+author: "Tannistha Roychoudhury"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+```{r setup, include = FALSE}
+
+data <- read.table("babies.txt", header=TRUE)
+
+smoker.ind <- which(data['smoke'] == 1)
+data.smoker <- data[smoker.ind,]
+
+nonsmoker.ind <- which(data['smoke'] == 0)
+data.nonsmoker <- data[nonsmoker.ind,]
+data.nonsmoker <- data.nonsmoker[sample(1:nrow(data.nonsmoker), 
+                                        nrow(data.smoker),
+                                        replace = FALSE),]
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+This section will use graphical methods to compare and contrast the birth weight of the babies of smoking mothers vs. non-smoking mothers. Given below are the summaries of information about the smokers vs. non-smokers using the summary function in R. Only the information about birth weight is included as it is the only relevant data in this section. The set of non-smokers is different from the default due to the difference in sample size of the two original sets (484 smokers vs. 742 non-smokers). To account for that, 484 points were taken as a sample from the set of non-smokers.
+
+#### Smokers
+
+```{r smokers, echo = FALSE}
+summary(data.smoker$bwt)
+```
+
+#### Non-Smokers
+
+```{r nonsmokers, echo = FALSE}
+summary(data.nonsmoker$bwt)
+```
+
+Before we use the many graphical methods we have for this section, we can make some observations based on the data presented in the summary. At a glance, it seems that non-smokers have babies generally with a higher birth weight than smokers. We can deduce that from the fact that both the mean and median for non-smokers is higher than those of smokers. However, this does not conclude anything definitively, hence we must graph these two datasets.
+
+## Histogram
+
+```{r hist_smoker, echo = FALSE}
+hist(data.smoker$bwt,
+     main = "Histogram of the Birth Weight of Smoking Mothers' Babies",
+     xlab = "Birth Weight of Smoking Mothers' Babies (ounces)",
+     border = "white",
+     col = "dark red",
+     las = 1,
+     breaks = 25)
+```
+
+```{r hist_nonsmoker, echo=FALSE}
+hist(data.nonsmoker$bwt,
+     main = "Histogram of the Birth Weight of Non-Smoking Mothers' Babies",
+     xlab = "Birth Weight of Non-Smoking Mothers' Babies (ounces)",
+     border = "white",
+     col = "dark green",
+     las = 1,
+     breaks = 25)
+```
+
+We first use histograms to observe the approximate density distribution of each dataset. Looking at the histogram for smokers, we can see that the distribution seems to be nearly bimodal but not quite: there is a definite mode at around the 120 mark, but at the 100 mark there exists a point that comes close to matching it. This in fact causes the histogram to be skewed ever so slightly to the left. Due to this asymmetry, questions arise as to the normality of the smokers distribution.
+
+The histogram for non-smokers, on the other hands, seems to show a clearly unimodal distribution with the mode roughly around the median. There are, however, outliers mainly on the left hand side signifying the minimum. This means that there were some cases where non-smokers reported baby birth weights far lower than the norm. The outlliers do make the distribution asymmetric, and look ever so slightly skewed left.
+
+## Box Plot
+
+```{r boxplot, echo=FALSE}
+boxplot(data.smoker$bwt,
+        data.nonsmoker$bwt,
+        main = "Boxplots of Birth Weight of Smoking & Non-Smoking Mothers' Babies",
+        names = c("Smoking Mothers", "Non-Smoking Mothers"),
+        ylab = "Birth Weight of Babies (ounces)",
+        col = c("dark red", "dark green"))
+```
+
+From the box plots we can see that the nonsmoker distribution is generally greater in value (in terms of baby birth weight) than the smoker distribution. Both distributions show to be roughly symmetric, although the non-smokers' spread is slightly higher. The interquartile ranges for both plots also look to be roughly the same size. However, there are far more outliers in the non-smokers' boxplot, showing the asymmetry that we noticed when observing their histograms. Regardless, there is very little observable skew within the boxplot of either distribution.
+
+## Quantile-Quantile Plot
+
+```{r qqplot, echo=FALSE}
+
+qqplot(data.smoker$bwt,
+       data.nonsmoker$bwt,
+       main = "Q-Q Plot of the Birth Weight of Babies of Smokers vs. Non-Smokers",
+       xlab = "Smoking Mothers' Babies",
+       ylab = "Non-Smoking Mothers' Babies")
+abline(c(0,1))
+```
+
+The quantile-quantile plot shows us a sample comparison of the smoker data and the non-smoker data. It's clear that the smoker distribution is different to the non-smoker distribution: for every smoker, the corresponding non-smoker value is generally slightly higher. There are a few outliers on the lower end where some non-smokers had babies with birth weights lower than the corresponding smokers, something we also noticed in the histograms and the boxplots. Except for the few outliers, the non-smoker distribution seems to be constantly higher than the corresponding smoker distribution to an near linear degree. This means that both distributions, while different in means, have roughtly the same shape, which we also saw when looking at the histograms and boxplots.
+
+## Normal Quantile Plot
+
+```{r qqnorm, echo=FALSE}
+
+qqnorm(data.smoker$bwt,
+       main = "Normal Quantile Plot of the Birth Weight of Smokers' Babies",
+       col = "dark red")
+qqline(data.smoker$bwt,
+       col = "dark red")
+
+qqnorm(data.nonsmoker$bwt,
+       main = "Normal Quantile Plot of the Birth Weight of Non-Smokers' Babies",
+       col = "dark green")
+qqline(data.nonsmoker$bwt,
+       col = "dark green")
+```
+
+The normal quantile plots for both the smoker and non-smoker distribution should give us a clearer idea as to the normality of the respective distrubition. The normal quantile plot for smokers is nearly identical to the line that reperesents the theoretical normal model, with very few outliers. This means that we can safely say that the sample of smokers follows a nearly normal distribution. On the other hand, the plot for nonsmokers strays from the normal model line on the left and right hand side, which represent the outliers on either end we observed in all the previous plots. While the majority of the points fall on the line, we cannot safely conclude that the nonsmoker distribution is nearly normal.
+
