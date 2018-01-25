@@ -1,0 +1,156 @@
+---
+title: "Math 189 - Case Study 1"
+output:
+  html_document:
+    df_print: paged
+---
+
+Importing data from Kaiser patient information.
+```{r}
+data <- read.table("babies.txt", header=TRUE)
+
+head(data)
+```
+
+Seperating the data into two distinct data sets. One containing all the patients who have smoked during their pregnancy and the other containing the patients who did not smoke during their pregnancy. Note that we are discarding the data where smoker data is unknown. 
+```{r}
+smoker.ind <- which(data['smoke'] == 1)
+data.smoker <- data[smoker.ind,]
+
+nonsmoker.ind <- which(data['smoke'] == 0)
+data.nonsmoker <- data[nonsmoker.ind,]
+```
+
+In order to analysis the distribution difference between the two sets, we must have an equal amount of population sample. Thus we will take a random sample of 484 points from the nonsmoker data. This will allow us to perserve the quality of the data while reducing the sample size. 
+
+```{r}
+data.nonsmokersmall <- data.nonsmoker[sample(1:nrow(data.nonsmoker), 484,
+  	replace=FALSE),]
+```
+
+
+We will use the summary method in order to gain an overview for smoker and nonsmoker data.
+```{r}
+summary(data.smoker) 
+```
+
+```{r}
+summary(data.nonsmokersmall)
+```
+
+As a preliminary dive into the data, we will look at calculating the difference in mean between the two sets. This will show if there is a difference in birth weight for babies born to women who smoked during their pregnancy and for babies born to women who did not smoke during their pregnancy.
+
+Mean and standard deviation of mother's who smoked during their pregnancy.
+```{r}
+smokerMean <- mean(data.smoker$bwt)
+smokerMean
+
+smokerSD <- sd(data.smoker$bwt)
+smokerSD
+```
+
+Mean and standard deviation of mother's who did not smoke during their pregnancy.
+```{r}
+nonsmokerMean <- mean(data.nonsmokersmall$bwt)
+nonsmokerMean
+
+nonsmokerSD <- sd(data.nonsmokersmall$bwt)
+nonsmokerSD
+```
+
+Normalizing both the smoker and nonsmoker (culled down to only 484 varaibles seletected at random) data sets so we can compare the distribution. 
+```{r}
+smokerNormal <- (data.smoker$bwt - smokerMean) / smokerSD
+smokerNormal
+
+nonsmokerNormal <- (data.nonsmokersmall$bwt - nonsmokerMean) / nonsmokerSD
+nonsmokerNormal
+
+```
+
+Calculating Skewness Coefficient for both values. We are looking at if the distribution is skewed left or right for both data sets.
+```{r}
+mean(smokerNormal^3)
+
+mean(nonsmokerNormal^3) 
+
+```
+We can see that the data for smokers is only ....skweed left 
+
+
+Calculating Kurtosis Coefficient for both values. We do this in order to determine if these two distributions are indeed normal. Our expectation is that the closer the value is 3, the more normal it is.
+```{r}
+smokerKurtosis <- mean(smokerNormal^4)
+smokerKurtosis
+
+nonsmokerKurtosis <- mean(nonsmokerNormal^4)
+nonsmokerKurtosis
+
+```
+
+While the smoker data is relatively close to normal, we also observe that the nonsmoker data is a significant distance away from three. We will enact a simulation study in order to a departure from normal distribution is big or small. 
+
+
+```{r}
+normal_kurtosis=NULL
+for(i in 1:1000) { 
+simData <- rnorm(484)
+normal_kurtosis[i]=mean(simData^4) }
+
+hist(normal_kurtosis)
+```
+Here, we see that 2.9 kurtosis value for the smoker data set is a very normal kurtosis value. However, we also observe that the 4.01 kurtosis value for nonSmokers is largely abnormal and falls in the right tail. It is in 
+
+```{r}
+percentile <- ecdf(normal_kurtosis)
+percentile(nonsmokerKurtosis)
+
+percentile(smokerKurtosis)
+
+```
+We can observe that the kurtosis value for nonSmokers is in the 98th percentile when compared a stimulated data set of the same sample size. Thus, we conclude that the distribution of the nonSmoker data set is not normal. 
+
+In contrast, the kurtosis value for the Smoker data set is in the 49th percentile when compared to a simulated data set of the sample size. Thus, we can conclude that the distribution of the Smoker data set is normal.
+
+/////////////ignore the rest of this. Not relevant
+
+In order to determine if this difference is statistically different, we will apply a T-test to determine if the two groups are equal. We believe a T-test is appropiate for this data set because we are looking at comparing the mean between two unpaired populations with one catagorical section (smoke vs nonsmoke) and a quantiative section(birth weight). 
+
+To confirm that a T-test is valid, we must show that the two data sets follow a normal distribution. Thus we will first graph the histogram of both data sets.
+
+```{r}
+hist(data.smoker$bwt)
+```
+
+```{r}
+hist(data.nonsmoker$bwt)
+```
+
+We can see that both the birthrate of children born to mothers who smoke and do not smoke during their pregnancy follow a normal distribution. Thus we will continue with the t-test. 
+
+In order to decide what type of T-test we will run, we must first analyze the standard deviation of both data sets.
+```{r}
+sd(data.smoker$bwt)
+sd(data.nonsmoker$bwt)
+```
+
+We observe that these two populations do not have equal standard deviation. Thus, we will argue that a Welch T-Test is the most appopriate for the data.
+
+The reason we are using a Welch test is more appropriate is because the two populations have unequal variances and unequal sample sizes which is the case for this data.
+
+Null Hypothesis: The is no difference in means of birth weight for babies born to women who smoked during their pregnancy and for babies born to women who did not smoke during their pregnancy.
+
+Alternative Hypothesis: The is a difference in birth weight for babies born to women who smoked during their pregnancy and for babies born to women who did not smoke during their pregnancy.
+
+https://en.wikipedia.org/wiki/Welch%27s_t-test
+
+Running a Welch two-sample unpaired t test on birth weights of children born from mothers who smoked during their pregnancy and those who did not.
+```{r}
+t.test(data.smoker$bwt,data.nonsmoker$bwt)
+```
+
+We see that the the p-value is less than 2.2e-16 which indiciates there is a strong evidence against the null hypothesis. 
+
+Thus, we reject the null hypothesis "The is no difference in means of birth weight for babies born to women who smoked during their pregnancy and for babies born to women who did not smoke during their pregnancy," and have shown smkoking does have a statistically significant impact on the birth weight of children.
+
+**It is also valuable to note that since N is sufficiently large, T distribution is approximately Z distrubition which is why we have elected to go with the T.test. It is also worth to note that we did not elect to perform a Chi-squared test because we are looking at the means of population data rather than categorical data.
