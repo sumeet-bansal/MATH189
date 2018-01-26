@@ -20,12 +20,15 @@ data.nonsmoker <- data.nonsmoker[sample(1:nrow(data.nonsmoker),
                                         nrow(data.smoker),
                                         replace = FALSE),]
 
+
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## Introduction
 
 This section will use graphical methods to compare and contrast the birth weight of the babies of smoking mothers vs. non-smoking mothers. Given below are the summaries of information about the smokers vs. non-smokers using the summary function in R. Only the information about birth weight is included as it is the only relevant data in this section. The set of non-smokers is different from the default due to the difference in sample size of the two original sets (484 smokers vs. 742 non-smokers). To account for that, 484 points were taken as a sample from the set of non-smokers.
+
+
 
 #### Smokers
 
@@ -45,22 +48,28 @@ Before we use the many graphical methods we have for this section, we can make s
 
 ```{r hist_smoker, echo = FALSE}
 hist(data.smoker$bwt,
-     main = "Histogram of the Birth Weight of Smoking Mothers' Babies",
-     xlab = "Birth Weight of Smoking Mothers' Babies (ounces)",
+     main = "Frequency of birth weights of babies with smoking mothers",
+     xlab = "Birth weight (ounces)",
      border = "white",
      col = "dark red",
      las = 1,
-     breaks = 25)
+     breaks = 25,
+     xlim = c(50, 180)
+     )
 ```
 
 ```{r hist_nonsmoker, echo=FALSE}
+
 hist(data.nonsmoker$bwt,
-     main = "Histogram of the Birth Weight of Non-Smoking Mothers' Babies",
-     xlab = "Birth Weight of Non-Smoking Mothers' Babies (ounces)",
+     main = "Fequency of birth weights of babies with non-smoking mothers",
+     xlab = "Birth weight (ounces)",
      border = "white",
      col = "dark green",
      las = 1,
-     breaks = 25)
+     breaks = 25,
+     xlim = c(50,180)
+)
+
 ```
 
 We first use histograms to observe the approximate density distribution of each dataset. Looking at the histogram for smokers, we can see that the distribution seems to be nearly bimodal but not quite: there is a definite mode at around the 120 mark, but at the 100 mark there exists a point that comes close to matching it. This in fact causes the histogram to be skewed ever so slightly to the left. Due to this asymmetry, questions arise as to the normality of the smokers distribution.
@@ -72,9 +81,9 @@ The histogram for non-smokers, on the other hands, seems to show a clearly unimo
 ```{r boxplot, echo=FALSE}
 boxplot(data.smoker$bwt,
         data.nonsmoker$bwt,
-        main = "Boxplots of Birth Weight of Smoking & Non-Smoking Mothers' Babies",
-        names = c("Smoking Mothers", "Non-Smoking Mothers"),
-        ylab = "Birth Weight of Babies (ounces)",
+        main = "Birth weight of babies with smoking and non-smoking mothers",
+        names = c("Smoking mothers", "Non-smoking mothers"),
+        ylab = "Birth weight (ounces)",
         col = c("dark red", "dark green"))
 ```
 
@@ -86,9 +95,9 @@ From the box plots we can see that the nonsmoker distribution is generally great
 
 qqplot(data.smoker$bwt,
        data.nonsmoker$bwt,
-       main = "Q-Q Plot of the Birth Weight of Babies of Smokers vs. Non-Smokers",
-       xlab = "Smoking Mothers' Babies",
-       ylab = "Non-Smoking Mothers' Babies")
+       main = "Comparison of distributions of birth weights for \n babies with smoking and non-smoking mothers",
+       xlab = "Smoking mothers' babies' birth weight (ounces)",
+       ylab = "Non-smoking mothers' babies' birth weight (ounces)")
 abline(c(0,1))
 ```
 
@@ -99,13 +108,17 @@ The quantile-quantile plot shows us a sample comparison of the smoker data and t
 ```{r qqnorm, echo=FALSE}
 
 qqnorm(data.smoker$bwt,
-       main = "Normal Quantile Plot of the Birth Weight of Smokers' Babies",
-       col = "dark red")
+       main = "Comparison of birth weights of babies with \n smoking mothers against a normal distribution",
+       col = "dark red",
+       ylab = "Birth weight (ounces)",
+       xlab = "Theoretical normal quantiles")
 qqline(data.smoker$bwt,
        col = "dark red")
 
 qqnorm(data.nonsmoker$bwt,
-       main = "Normal Quantile Plot of the Birth Weight of Non-Smokers' Babies",
+       main = "Comparison of birth weights of babies with \n non-smoking mothers against a normal distribution",
+       ylab = "Birth weight (ounces)",
+       xlab = "Theortical normal quantiles",
        col = "dark green")
 qqline(data.nonsmoker$bwt,
        col = "dark green")

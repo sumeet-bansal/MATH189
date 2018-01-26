@@ -28,7 +28,7 @@ For smoking mothers:
 ```{r}
 length(smokers$bwt[smokers$bwt < lowbwt])
 length(smokers$bwt)
-length(smokers$bwt[smokers$bwt < lowbwt]) / length(smokers$bwt)
+length(smokers$bwt[smokers$bwt < lowbwt]) / length(smokers$bwt) * 100
 ```
 
 For nonsmoking mothers:
@@ -36,7 +36,7 @@ For nonsmoking mothers:
 ```{r}
 length(nonsmokers$bwt[nonsmokers$bwt < lowbwt])
 length(nonsmokers$bwt)
-length(nonsmokers$bwt[nonsmokers$bwt < lowbwt]) / length(nonsmokers$bwt)
+length(nonsmokers$bwt[nonsmokers$bwt < lowbwt]) / length(nonsmokers$bwt) * 100
 ```
 
 Comparing these numbers, there's a marked difference in the frequency of low birth weights for smoking versus nonsmoking mothers: mothers who smoke have a significantly higher frequency of low birth weights (8.26%) than mothers who do not smoke (3.10%).
@@ -53,7 +53,7 @@ The graph of frequencies versus thresholds for smokers:
 weights <- seq(min(smokers$bwt), max(smokers$bwt))
 freqs <- c()
 for (i in 1:length(weights)) { freqs[i] <- length(which(smokers$bwt < weights[i]))/length(smokers$bwt) }
-plot(weights, freqs, type='l', main="Frequencies of Low Birth Weight for Babies Born to Smokers", xlab="Threshold for Low Birth Weight", ylab="Frequency for Threshold")
+plot(weights, freqs, type='l', main="Proportion of low-birth-weight babies born to smokers \n given different thresholds for low birth weight", xlab="Threshold for low birth weight (ounces)", ylab="Proportion of low-birth-weight babies", col="dark red")
 remove(i)
 ```
 
@@ -64,7 +64,7 @@ Measuring reliability by the change in frequency (i.e. slope) can be more explic
 ```{r}
 deltas <- c()
 for (i in 1:length(weights)-1) { deltas[i] <- freqs[i+1] - freqs[i] }
-plot(weights[1:length(weights)-1], deltas, type='p', main="Deltas of Frequencies of Low Birth Weights for Babies Born to Smokers", xlab="Threshold for Low Birth Weight", ylab="Delta of Frequencies for Consecutive Birth Weights")
+plot(weights[1:length(weights)-1], deltas, type='p', main="Deltas of frequencies of low-birth-weight babies born to smokers", xlab="Threshold for low birth weight", ylab="Delta of frequencies for consecutive birth weights", col = "dark red")
 remove(i)
 ```
 
@@ -77,7 +77,13 @@ The graph of frequencies versus thresholds for nonsmokers:
 weights <- seq(min(nonsmokers$bwt), max(nonsmokers$bwt))
 freqs <- c()
 for (i in 1:length(weights)) { freqs[i] <- length(which(nonsmokers$bwt < weights[i]))/length(nonsmokers$bwt) }
-plot(weights, freqs, type='l', main="Frequencies of Low Birth Weight for Babies born to Non-Smokers", xlab="Threshold for Low Birth Weight", ylab="Frequency for Threshold")
+plot(weights, 
+     freqs, 
+     type='l', 
+     main="Proportions of low-birth-weight babies born to non-smokers \n given different thresholds for low birth weight", 
+     xlab="Threshold for low birth weight (ounces)", 
+     ylab="Proportion of low-birth-weight babies",
+     col = "dark green")
 remove(i)
 ```
 
@@ -88,7 +94,7 @@ The graph of deltas of frequencies versus thresholds for non-smokers:
 ```{r}
 deltas <- c()
 for (i in 1:length(weights)-1) { deltas[i] <- freqs[i+1] - freqs[i] }
-plot(weights[1:length(weights)-1], deltas, type='p', main="Deltas of Frequencies of Low Birth Weights for Babies Born to Non-Smokers", xlab="Threshold for Low Birth Weight", ylab="Delta of Frequencies for Consecutive Birth Weights")
+plot(weights[1:length(weights)-1], deltas, type='p', main="Deltas of frequencies of low-birth-weight babies born to non-smokers", xlab="Threshold for low birth weight", ylab="Delta of frequencies for consecutive birth weights", col="dark green")
 remove(i)
 ```
 

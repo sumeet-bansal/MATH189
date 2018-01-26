@@ -89,15 +89,28 @@ nonsmokerKurtosis
 ```
 
 While the smoker data is relatively close to normal, we also observe that the nonsmoker data is a significant distance away from three. We will enact a simulation study in order to a departure from normal distribution is big or small. 
+```{r}
+normal_skewness=NULL
+for(i in 1:100000) {
+  simData <- rnorm(484)
+  normal_skewness[i]=mean(simData^3)}
 
+hist(normal_skewness,
+     main = "Frequency of different skewness values for normally \n distributed data with a sample size of 484",
+     xlab = "Skewness",
+     xlim = c(-1, 1))
+```
 
 ```{r}
 normal_kurtosis=NULL
-for(i in 1:1000) { 
+for(i in 1:100000) { 
 simData <- rnorm(484)
 normal_kurtosis[i]=mean(simData^4) }
 
-hist(normal_kurtosis)
+hist(normal_kurtosis,
+     main="Frequency of different kurtosis values for normally \n distributed data with a sample size of 484",
+     xlab = "Kurtosis",
+     xlim = c(1, 5.5))
 ```
 Here, we see that 2.9 kurtosis value for the smoker data set is a very normal kurtosis value. However, we also observe that the 4.01 kurtosis value for nonSmokers is largely abnormal and falls in the right tail. It is in 
 
@@ -106,6 +119,12 @@ percentile <- ecdf(normal_kurtosis)
 percentile(nonsmokerKurtosis)
 
 percentile(smokerKurtosis)
+
+percentile <- ecdf(normal_skewness)
+
+percentile(-0.0334)
+percentile(-0.0684)
+
 
 ```
 We can observe that the kurtosis value for nonSmokers is in the 98th percentile when compared a stimulated data set of the same sample size. Thus, we conclude that the distribution of the nonSmoker data set is not normal. 
