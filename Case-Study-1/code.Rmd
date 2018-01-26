@@ -1,0 +1,268 @@
+---
+title: "Code"
+output: html_document
+---
+
+```{r analysis}
+
+data_race = data
+F <- function(x) if (x<=5) "white" else if (x == 6) "mex" else if (x == 7) "black" else if (x == 8) "asian"
+mother_race <- unlist(lapply(data$race, F))
+
+Remove9and99 = function(toRemove, from) from[toRemove < 9]
+
+wt_mother_race = Remove9and99(data_race$race, data_race$wt)
+
+boxplot(wt_mother_race~mother_race,xlab="mothers race",ylab="baby wieght")
+
+asian_residuals = wt_mother_race[mother_race == 'asian'] - mean(wt_mother_race[mother_race == 'asian'])
+hist(asian_residuals)
+
+white_residuals = wt_mother_race[mother_race == 'white'] - mean(wt_mother_race[mother_race == 'white'])
+hist(white_residuals)
+
+qqnorm(white_residuals);qqline(white_residuals, col = 2)
+
+black_residuals = wt_mother_race[mother_race == 'black'] - mean(wt_mother_race[mother_race == 'black'])
+hist(black_residuals)
+
+qqnorm(black_residuals);qqline(black_residuals, col = 2)
+
+mex_residuals = wt_mother_race[mother_race == 'mex'] - mean(wt_mother_race[mother_race == 'mex'])
+hist(mex_residuals)
+
+qqnorm(mex_residuals);qqline(mex_residuals, col = 2)
+
+summary(aov(wt_mother_race~mother_race))
+
+fathers_race <- unlist(lapply(data$drace, F))
+
+Remove9and99 = function(toRemove, from) from[toRemove < 9]
+
+wt_fathers_race = Remove9and99(data_race$drace, data_race$wt)
+
+boxplot(wt_fathers_race~fathers_race,xlab="fathers race",ylab="baby wieght")
+
+summary(aov(wt_fathers_race~fathers_race))
+
+getBabyRace = function(x,y) if ((x == y) && (x < 9) && (y < 9)) F(x)
+baby_race <- unlist(mapply(getBabyRace, data$race, data$drace))
+
+#remove unsessasary mother race info
+wt_race = data$wt[data$race < 9]
+drace = data$drace[data$race < 9]
+mrace = data$race[data$race < 9]
+
+#remove unsessasary father race info
+wt_race = wt_race[drace < 9]
+mrace = mrace[drace < 9]
+drace = drace[drace < 9]
+
+wt_race = wt_race[drace == mrace]
+
+boxplot(wt_race~baby_race,xlab="baby race",ylab="baby wieght")
+
+summary(aov(wt_race~baby_race))
+
+summary(aov(sample(wt_fathers_race, length(wt_race))~sample(fathers_race, length(baby_race))))
+
+summary(aov(sample(wt_mother_race, length(wt_race))~sample(mother_race, length(baby_race))))
+
+smokedOrNo = data$smoke < 2
+
+getBabyRace = function(x,y) if ((x == y) && (x < 9) && (y < 9)) F(x)
+baby_race <- unlist(mapply(getBabyRace, data$race[smokedOrNo], data$drace[smokedOrNo]))
+
+#remove uncertain smokers
+smoke = data$number[smokedOrNo]
+smokeBinary = data$smoke[smokedOrNo]
+drace = data$drace[smokedOrNo]
+mrace = data$race[smokedOrNo]
+
+#remove unsessasary mother race info
+smoke = smoke[mrace < 9]
+smokeBinary = smokeBinary[mrace < 9]
+drace = drace[mrace < 9]
+mrace = mrace[mrace < 9]
+
+#remove unsessasary father race info
+smoke = smoke[drace < 9]
+smokeBinary = smokeBinary[drace < 9]
+mrace = mrace[drace < 9]
+drace = drace[drace < 9]
+
+smoke_race = smoke[drace == mrace]
+smokeBinary = smokeBinary[drace == mrace]
+
+boxplot(smoke_race~baby_race,xlab="baby race",ylab="number cigs")
+
+tbl = table(smokeBinary,baby_race)
+tbl
+chisq.test(tbl) 
+
+```
+
+
+```{r numerical}
+
+data <- read.table("babies.txt", header=TRUE)
+
+smokers <- data[data$smoke == 1,]
+nonsmokers <- data[data$smoke == 0,]
+
+lowbwt <- 89
+
+length(smokers$bwt[smokers$bwt < lowbwt])
+length(smokers$bwt)
+length(smokers$bwt[smokers$bwt < lowbwt]) / length(smokers$bwt) * 100
+
+length(nonsmokers$bwt[nonsmokers$bwt < lowbwt])
+length(nonsmokers$bwt)
+length(nonsmokers$bwt[nonsmokers$bwt < lowbwt]) / length(nonsmokers$bwt) * 100
+
+weights <- seq(min(smokers$bwt), max(smokers$bwt))
+freqs <- c()
+for (i in 1:length(weights)) { freqs[i] <- length(which(smokers$bwt < weights[i]))/length(smokers$bwt) }
+plot(weights, freqs, type='l', main="Proportion of low-birth-weight babies born to smokers \n given different thresholds for low birth weight", xlab="Threshold for low birth weight (ounces)", ylab="Proportion of low-birth-weight babies", col="dark red")
+remove(i)
+
+deltas <- c()
+for (i in 1:length(weights)-1) { deltas[i] <- freqs[i+1] - freqs[i] }
+plot(weights[1:length(weights)-1], deltas, type='p', main="Deltas of frequencies of low-birth-weight babies born to smokers", xlab="Threshold for low birth weight", ylab="Delta of frequencies for consecutive birth weights", col = "dark red")
+remove(i)
+
+weights <- seq(min(nonsmokers$bwt), max(nonsmokers$bwt))
+freqs <- c()
+for (i in 1:length(weights)) { freqs[i] <- length(which(nonsmokers$bwt < weights[i]))/length(nonsmokers$bwt) }
+plot(weights, 
+     freqs, 
+     type='l', 
+     main="Proportions of low-birth-weight babies born to non-smokers \n given different thresholds for low birth weight", 
+     xlab="Threshold for low birth weight (ounces)", 
+     ylab="Proportion of low-birth-weight babies",
+     col = "dark green")
+remove(i)
+
+deltas <- c()
+for (i in 1:length(weights)-1) { deltas[i] <- freqs[i+1] - freqs[i] }
+plot(weights[1:length(weights)-1], deltas, type='p', main="Deltas of frequencies of low-birth-weight babies born to non-smokers", xlab="Threshold for low birth weight", ylab="Delta of frequencies for consecutive birth weights", col="dark green")
+remove(i)
+```
+
+
+```{r graphical}
+
+data <- read.table("babies.txt", header=TRUE)
+
+smoker.ind <- which(data['smoke'] == 1)
+data.smoker <- data[smoker.ind,]
+
+nonsmoker.ind <- which(data['smoke'] == 0)
+data.nonsmoker <- data[nonsmoker.ind,]
+data.nonsmoker <- data.nonsmoker[sample(1:nrow(data.nonsmoker), 
+                                        nrow(data.smoker),
+                                        replace = FALSE),]
+knitr::opts_chunk$set(echo = TRUE)
+
+summary(data.smoker$bwt)
+summary(data.nonsmoker$bwt)
+
+
+hist(data.smoker$bwt,
+     main = "Frequency of birth weights of babies with smoking mothers",
+     xlab = "Birth weight (ounces)",
+     border = "white",
+     col = "dark red",
+     las = 1,
+     breaks = 25,
+     xlim = c(50, 180)
+     )
+
+hist(data.nonsmoker$bwt,
+     main = "Fequency of birth weights of babies with non-smoking mothers",
+     xlab = "Birth weight (ounces)",
+     border = "white",
+     col = "dark green",
+     las = 1,
+     breaks = 25,
+     xlim = c(50,180)
+    )
+
+boxplot(data.smoker$bwt,
+        data.nonsmoker$bwt,
+        main = "Birth weight of babies with smoking and non-smoking mothers",
+        names = c("Smoking mothers", "Non-smoking mothers"),
+        ylab = "Birth weight (ounces)",
+        col = c("dark red", "dark green"))
+
+qqplot(data.smoker$bwt,
+       data.nonsmoker$bwt,
+       main = "Comparison of distributions of birth weights for \n babies with smoking and non-smoking mothers",
+       xlab = "Smoking mothers' babies' birth weight (ounces)",
+       ylab = "Non-smoking mothers' babies' birth weight (ounces)")
+abline(c(0,1))
+
+
+qqnorm(data.smoker$bwt,
+       main = "Comparison of birth weights of babies with \n smoking mothers against a normal distribution",
+       col = "dark red",
+       ylab = "Birth weight (ounces)",
+       xlab = "Theoretical normal quantiles")
+qqline(data.smoker$bwt,
+       col = "dark red")
+
+qqnorm(data.nonsmoker$bwt,
+       main = "Comparison of birth weights of babies with \n non-smoking mothers against a normal distribution",
+       ylab = "Birth weight (ounces)",
+       xlab = "Theortical normal quantiles",
+       col = "dark green")
+qqline(data.nonsmoker$bwt,
+       col = "dark green")
+```
+
+```{r incidence}
+
+data <- read.table("babies.txt", header=TRUE)
+
+smokers <- data[data$smoke == 1,]
+nonsmokers <- data[data$smoke == 0,]
+
+lowbwt <- 89
+
+length(smokers$bwt[smokers$bwt < lowbwt])
+length(smokers$bwt)
+length(smokers$bwt[smokers$bwt < lowbwt]) / length(smokers$bwt) * 100
+
+length(nonsmokers$bwt[nonsmokers$bwt < lowbwt])
+length(nonsmokers$bwt)
+length(nonsmokers$bwt[nonsmokers$bwt < lowbwt]) / length(nonsmokers$bwt) * 100
+
+weights <- seq(min(smokers$bwt), max(smokers$bwt))
+freqs <- c()
+for (i in 1:length(weights)) { freqs[i] <- length(which(smokers$bwt < weights[i]))/length(smokers$bwt) }
+plot(weights, freqs, type='l', main="Proportion of low-birth-weight babies born to smokers \n given different thresholds for low birth weight", xlab="Threshold for low birth weight (ounces)", ylab="Proportion of low-birth-weight babies", col="dark red")
+remove(i)
+
+deltas <- c()
+for (i in 1:length(weights)-1) { deltas[i] <- freqs[i+1] - freqs[i] }
+plot(weights[1:length(weights)-1], deltas, type='p', main="Deltas of frequencies of low-birth-weight babies born to smokers", xlab="Threshold for low birth weight", ylab="Delta of frequencies for consecutive birth weights", col = "dark red")
+remove(i)
+
+weights <- seq(min(nonsmokers$bwt), max(nonsmokers$bwt))
+freqs <- c()
+for (i in 1:length(weights)) { freqs[i] <- length(which(nonsmokers$bwt < weights[i]))/length(nonsmokers$bwt) }
+plot(weights, 
+     freqs, 
+     type='l', 
+     main="Proportions of low-birth-weight babies born to non-smokers \n given different thresholds for low birth weight", 
+     xlab="Threshold for low birth weight (ounces)", 
+     ylab="Proportion of low-birth-weight babies",
+     col = "dark green")
+remove(i)
+
+deltas <- c()
+for (i in 1:length(weights)-1) { deltas[i] <- freqs[i+1] - freqs[i] }
+plot(weights[1:length(weights)-1], deltas, type='p', main="Deltas of frequencies of low-birth-weight babies born to non-smokers", xlab="Threshold for low birth weight", ylab="Delta of frequencies for consecutive birth weights", col="dark green")
+remove(i)
+
+```
