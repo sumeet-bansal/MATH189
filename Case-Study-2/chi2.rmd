@@ -1,0 +1,135 @@
+## Question
+Look for the difference between those who like to play video games and those who don't. To do this, use the questions in the last part of the survey, and make comparisons between male and female students, those who work for pay and those who don't, those who own a computer and whose who don't. Graphical display and cross-tabulations are particularly helpful in making these kinds of comparisons. Also, you may want to collapse the range of responses to a question down to two or three possibilities before making these comparisons.
+
+### Set Up
+The given data is loaded:
+```{r}
+data <- read.table('videodata.txt', header=TRUE)
+```
+
+Note: the question specifically asks about the differences between those who like to play video games and those who don't--the data for those who have never played (and therefore neither like nor dislike) video games is irrelevant. For this reason, the data for those who responded "never played" ("like": 1) for video game preference can be removed from the dataset. The data for those with responses marked 99 (for unknown value) can similarly be removed since no relevant information can be gleaned from those responses.
+
+```{r}
+data <- data[data$like != 1,]
+data <- data[data$like != 99,]
+```
+
+This leaves a spectrum of responses ranging from liking video games "very much" ("like": 2) to "not at all" ("like": 5). This spectrum can be compressed into two categories for the purposes of meaningful comparison: liking and disliking video games. This is done by combining the "very much like" and "somewhat like" responses (2 and 3) and combining the "not really" and "not at all" responses (4 and 5). To keep the dataset simple, the "like" responses are categorized as 1 and the "dislike" responses as 0.
+```{r}
+data$like[which(data$like == 2)] <- 1
+data$like[which(data$like == 3)] <- 1
+data$like[which(data$like == 4)] <- 0
+data$like[which(data$like == 5)] <- 0
+```
+
+Now, the responses are organized fairly neatly by like or dislike of video games and it is possible to run tests to determine how different factors influence like/dislike of games through a series of chi-squared goodness-of-fit tests.
+
+### Theory
+For statistical models, goodness of fit tests are used to determine any discrepancies between expected and observed values. In this case, the null hypothesis is that each factor does not individually influence whether a person likes or dislikes video games, with the alternative hypothesis that each factor does in fact influence a person's enjoyment of video games. These assumptions are made because it must be conclusively proven that a factor influences enjoyment of video games, instead of operating under the potentially faulty assumption of influence. With each factor (gender, work for pay, and computer ownership), the data is simplified to a single categorical variable: whether a respondent fits that factor or not (e.g. male or female, owns a computer or doesn't). The chi-squared test can be used to determine whether the expected frequencies for each of these factors significantly differs from the observed frequencies. If there is a significant difference in the expected and observed frequencies, then it can be safely stated that that factor has an influence on a person's like or dislike of video games since that factor has significantly changed opinions, more than can be normally be expected from random variations.
+
+The conditions for running a chi-squared test are as follows:
+1. The data was obtained by a properly randomly sampling method.
+2. The variable under study is categorical.
+3. The expected counts for each level of the variable is at least 5.
+
+The data is assumed to have been obtained reliably. Each factor is a categorical variable (either true or false), and the expected counts are at least 5 (shown in the Analysis section).
+
+### Analysis
+Since the null hypothesis is that each factor does not significantly influence, the expected proportions for the number of respondents who are influenced by a factor are simply the proportions of respondents who generally like or dislike video games.
+
+```{r}
+expected <- c(nrow(data[data$like==1,]) / nrow(data), nrow(data[data$like==0,]) / nrow(data))
+expected
+```
+
+It is expected that 77.5% of respondents like video games and 22.5% dislike games.
+
+Additionally, it can be shown that the expected counts for each level is at least 5.
+```{r}
+expected <- c(nrow(data[data$like==1,]), nrow(data[data$like==0,]))
+expected
+```
+The expected counts are 69 and 20 for liking and disliking video games, respectively.
+
+For the chi-squared tests, a standard p-value of 0.05 (5%) is used.
+
+#### Gender
+First, the data for males and females are loaded separately for analysis.
+```{r}
+males <- data[which(data$sex == 1),]
+females <- data[which(data$sex == 0),]
+```
+
+The expected proportions have already been calculated, and the actual values for males who like/dislike video games and for females who like/dislike video games are calculated.
+```{r}
+males <- c(nrow(males[which(males$like == 1),]), nrow(males[which(males$like == 0),]))
+females <- c(nrow(females[which(females$like == 1),]), nrow(females[which(females$like == 0),]))
+```
+
+Then, two separate chi-squared tests are run--one for males, and one for females.
+```{r}
+chisq.test(males, p=expected)
+chisq.test(females, p=expected)
+```
+The p-values for each test is well above the set significance level of 0.05 (0.246 and 0.179 for males and females, respectively), so the null hypothesis holds true: gender does not influence whether someone likes or dislikes video games.
+
+Cleaning up the data used for this test:
+```{r}
+remove(males)
+remove(females)
+```
+
+#### Work for Pay
+First, the data for those who work for pay and those who don't are loaded separately for analysis. Since some values for hours worked are unknown, those responses are excluded.
+```{r}
+work <- data[which(data$work >= 1 & data$work != 99),]
+noWk <- data[which(data$work == 0),]
+```
+
+The expected proportions have already been calculated, and the actual values for those who work and like/dislike video games and for those who don't work and like/dislike video games are calculated.
+```{r}
+work <- c(nrow(work[which(work$like == 1),]), nrow(work[which(work$like == 0),]))
+noWk <- c(nrow(noWk[which(noWk$like == 1),]), nrow(noWk[which(noWk$like == 0),]))
+```
+
+Then, two separate chi-squared tests are run--one for those who work, and one for those who don't.
+```{r}
+chisq.test(work, p=expected)
+chisq.test(noWk, p=expected)
+```
+The p-values for each test is well above the set significance level of 0.05 (0.204 and 0.138 for workers and non-workers, respectively), so the null hypothesis holds true: working for pay does not influence whether someone likes or dislikes video games.
+
+Cleaning up the data used for this test:
+```{r}
+remove(work)
+remove(noWk)
+```
+
+#### Computer Ownership
+First, the data for those who own computers and those who don't are loaded separately for analysis.
+```{r}
+owners <- data[which(data$own == 1),]
+notOwn <- data[which(data$own == 0),]
+```
+
+The expected proportions have already been calculated, and the actual values for those who own computers and like/dislike video games and for those who don't and like/dislike video games are calculated.
+```{r}
+owners <- c(nrow(owners[which(owners$like == 1),]), nrow(owners[which(owners$like == 0),]))
+notOwn <- c(nrow(notOwn[which(notOwn$like == 1),]), nrow(notOwn[which(notOwn$like == 0),]))
+```
+
+Then, two separate chi-squared tests are run--one for those who work, and one for those who don't.
+```{r}
+chisq.test(owners, p=expected)
+chisq.test(notOwn, p=expected)
+```
+The p-values for each test is well above the set significance level of 0.05 (0.204 and 0.138 for workers and non-workers, respectively), so the null hypothesis holds true: working for pay does not influence whether someone likes or dislikes video games.
+
+Cleaning up the data used for this test:
+```{r}
+remove(owners)
+remove(notOwn)
+```
+
+### Conclusion
+Running that series of chi-squared tests for each potentially influential factor determined that no single factor had a significant influence on a person's enjoyment of video games.
