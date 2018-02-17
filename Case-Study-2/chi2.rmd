@@ -40,6 +40,8 @@ Since the null hypothesis is that each factor does not significantly influence, 
 ```{r}
 expected <- c(nrow(data[data$like==1,]) / nrow(data), nrow(data[data$like==0,]) / nrow(data))
 expected
+nrow(data[data$like==1,])
+nrow(data[data$like==0,])
 ```
 
 It is expected that 77.5% of respondents like video games and 22.5% dislike games.
@@ -58,6 +60,9 @@ First, the data for males and females are loaded separately for analysis.
 ```{r}
 males <- data[which(data$sex == 1),]
 females <- data[which(data$sex == 0),]
+males
+nrow(males[males$like==1,])
+nrow(females[females$like==1,])
 ```
 
 The expected proportions have already been calculated, and the actual values for males who like/dislike video games and for females who like/dislike video games are calculated.
@@ -84,12 +89,16 @@ First, the data for those who work for pay and those who don't are loaded separa
 ```{r}
 work <- data[which(data$work >= 1 & data$work != 99),]
 noWk <- data[which(data$work == 0),]
+nrow(work[work$like==1,])
+nrow(noWk[noWk$like==1,])
 ```
 
 The expected proportions have already been calculated, and the actual values for those who work and like/dislike video games and for those who don't work and like/dislike video games are calculated.
 ```{r}
 work <- c(nrow(work[which(work$like == 1),]), nrow(work[which(work$like == 0),]))
 noWk <- c(nrow(noWk[which(noWk$like == 1),]), nrow(noWk[which(noWk$like == 0),]))
+nrow(work)
+nrow(noWk)
 ```
 
 Then, two separate chi-squared tests are run--one for those who work, and one for those who don't.
@@ -110,6 +119,8 @@ First, the data for those who own computers and those who don't are loaded separ
 ```{r}
 owners <- data[which(data$own == 1),]
 notOwn <- data[which(data$own == 0),]
+nrow(owners[owners$like==0,])
+nrow(notOwn[notOwn$like==0et ,])
 ```
 
 The expected proportions have already been calculated, and the actual values for those who own computers and like/dislike video games and for those who don't and like/dislike video games are calculated.

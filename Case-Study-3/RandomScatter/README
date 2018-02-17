@@ -1,1 +1,102 @@
+The file RandomScatter.hpp contains two methods for simulating a strand of DNA
 
+In order to change which method runs, and the parameters of the methods, go into
+"main.cpp" and change the variables I hard-coded. (Sorry, didn't want to mess with
+command line arguments.)
+
+To compile the program, type "make" into the command line.
+
+To run the program, type "./a.out" into the command line.
+
+
+
+1.  randomSequence
+    
+    method header: void randomSequence (int seqLength, int palMin, int palMax,
+                                        double trials, bool print)
+
+    parameters: int  seqLength - The length of the DNA sequence to be generated.
+                                 For us, I imagine this will just be 229354 all
+                                 the time.
+                int  palMin    - The minimum length of palindrome to test for. In 
+                                 the data we were given, the minimum length of 
+                                 palindrome was 10 base pairs.
+                int  palMax    - The maximum length of palindrome to test for. In
+                                 the data we were given, there were no palindromes
+                                 longer than 18 base pairs. I've been running this
+                                 with palMax set to 20, but palindromes of length
+                                 20 are rare (0.2 palindromes per sequence)
+                int  trials    - The number of sequences that should be randomly
+                                 generated and tested.
+                bool print     - If this is true, stats for every single trial
+                                 will be printed. If it is false, only aggregate
+                                 stats for all the trials will be printed.
+
+    This method generates a DNA strand of length "seqLength", then goes through the
+    strand and tests for palindromes.
+
+    If "print" is true, it prints out the number of palindromes of each length in 
+    each sequence, as well as the total number of palindromes found.
+
+    Whether or not "print" is true, it prints out the mean number of palindromes of 
+    each length in each sequence, as well as the mean of the total number of 
+    palindromes found in each sequence.
+
+2.  randomScatter
+
+    method header: void randomScatter (int seqLength, int numPal, int lengthPal,
+                                       int numFrames, int trials, bool print)
+
+    parameters: int  seqLength - The length of the DNA sequence to be generated.
+                                 For us, this number will be 229354.
+                int  numPal    - The number of palindromes that will be scattered
+                                 into the DNA sequence generated
+                int  lengthPal - The length of the palindromes to be scattered into
+                                 the DNA sequence. The mean length of palindromes is
+                                 around 11, but since palindromes must be an even 
+                                 number of base pairs long, there may be an argument
+                                 for making all of the palindromes length 10 or 12.
+                                 What I'm hoping is that the results don't differ
+                                 too much between using palindromes of length 10 and
+                                 palindromes of length 12.
+                int  numFrames - The number of frames that the DNA strand should be 
+                                 split into. Note that only "numFrames - 1" frames
+                                 will actually be tested, since, the way I coded
+                                 this, the last frame could be significantly smaller
+                                 than all the others (it's got all the remainder of
+                                 the base pairs after the rest have been divided
+                                 up). Feel free to change this, if you like. I'm not
+                                 sure this is ideal.
+                int  trials    - The number of sequences that should be randomly
+                                 generated and tested.
+                bool print     - If this is true, stats for every single trial will
+                                 be printed. If it is false, only aggregate stats
+                                 for all the trials will be printed.
+
+    This method generates a "DNA" sequence of length "seqLength" and scatters into
+    it "numPal" number of palindromes of length "lengthPal". If the palindromes are
+    scattered such that they overlap, or they run off the end of the sequence, then
+    that sequence is discarded and this trial is attempted again (if the "trials"
+    parameter is set to a number, then that many successful trials will be run. 
+    Unsuccessful trials (those with overlapping palindromes) don't count).
+
+    The method then counts the distances between consecutive palindromes, and counts
+    the number of palindromes in each of "numFrames" frames that the DNA has been
+    split into. 
+
+    If "print" is true, it prints out each of the distances between consecutive 
+    palindromes for each string of DNA generated. The distances are seperated by a
+    space. It also prints out the number of palindromes in each frame. The numbers
+    are seperated by a space.
+
+    Whether or not "print" is true, it prints out the mean and standard deviation 
+    for the distances between consecutive palindromes, and for the number of 
+    palindromes in each frame. Tbh I'd just "print" a bunch of data and graph it
+    though.
+
+
+
+Notes:
+
+    The pseudorandomness in this program is achieved by using Tyler's PID (13355037)
+    as a seed. This is hard-coded into RandomScatter.hpp.
