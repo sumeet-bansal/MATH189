@@ -1,0 +1,14 @@
+```{r}
+N <- 200000
+n.region <- 50
+site <- as.numeric(unlist(read.table('hcmv.txt', header=TRUE)))
+stripplot(site, pch=16, cex=0.25)
+site.temp <- chisqtable(n.region, data, N)
+data.tab <- matrix(rep(NA, 9*2), 9, 2)
+data.tab[1,] <- colSums(data.tabtemp[1:2, 2:3])
+data.tab[2:7,] <- data.tabtemp[3:8, 2:3]
+data.tab[8,] <- colSums(data.tabtemp[9:11, 2:3])
+data.tab[9,] <- colSums(data.tabtemp[12:14, 2:3])
+data.stats <- sum((data.tab[,2] - data.tab[,1])^2/data.tab[,2])
+pchisq(data.stats, 5, lower.tail=FALSE)
+```
