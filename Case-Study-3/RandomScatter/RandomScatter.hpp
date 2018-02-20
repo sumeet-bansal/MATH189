@@ -229,7 +229,7 @@ namespace RandomScatter {
       }
 
       //Continue if sequence is valid
-
+/*
       //Find distances between palindromes
       vector<int> distVect;
       int distCount = 0;
@@ -258,7 +258,7 @@ namespace RandomScatter {
         //Don't print first and last entry, since those aren't distances b/w pals
         for (int n = 1; n < distVect.size() - 1; n++)
         {
-          cout << distVect[n] << " ";
+          cout << distVect[n] << ",";
         }
         cout << endl << endl;
       }
@@ -303,12 +303,45 @@ namespace RandomScatter {
         cout << "Palindromes per frame of size " << frameLength << ": ";
         for (int s = 0; s < palVect.size(); s++)
         {
-          cout << palVect[s] << " ";
+          cout << palVect[s] << ",";
         }
         cout << endl << endl;
       }
-    }
+    }*/
 
+
+    //Find number of palindromes in each rolling frame
+    int FR = 200;
+    for (int frameSize = FR; frameSize <= FR; frameSize+=1000)
+    {
+      cout << "Frame size: " << frameSize << endl;
+      for (int i = 0; i < seqLength - frameSize; i+= 100)
+      {
+        int palCount = 0;
+        for (int j = i; j < i + frameSize; j++)
+        {
+          if (sequence[j] == 1)
+          {
+            palCount++;
+            
+            while (sequence[j] == 1)
+            {
+              j++;
+            }
+          }
+        }
+        cout << palCount << ",";
+      }
+    }
+cout << endl << endl;
+    for (int frameSize = FR; frameSize <= FR; frameSize+=1000)
+    {
+      for (int i = 0; i < seqLength - frameSize; i+= 100)
+      {
+        cout << i << ",";
+      }
+    }
+}
     //Print aggregate stats
     double distAve = mean( allDistVec );
     double distDev = stdev( allDistVec, distAve );

@@ -10,15 +10,15 @@ int main()
   int TRIALS = 100;
   bool PRINT = false;
 
-  RandomScatter::randomSequence( SEQLENGTH, PALMIN, PALMAX, TRIALS, PRINT );
+  //RandomScatter::randomSequence( SEQLENGTH, PALMIN, PALMAX, TRIALS, PRINT );
 
   //Random scatter variables
   SEQLENGTH = 229354;
   int NUMPAL = 296;
   int LENGTHPAL = 10;
   int NUMFRAMES = 50;
-  TRIALS = 100;
-  PRINT = false;
+  TRIALS = 1;
+  PRINT = true;
 
   RandomScatter::randomScatter( SEQLENGTH, NUMPAL, LENGTHPAL, NUMFRAMES, TRIALS, PRINT);
   
