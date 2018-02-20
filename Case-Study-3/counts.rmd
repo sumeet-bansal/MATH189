@@ -1,0 +1,70 @@
+## Question
+Use graphical methods and more formal statistical tests to examine the
+counts of palindromes in various regions of the DNA. Split the DNA into nonoverlapping
+regions of equal length to compare the number of palindromes in an interval to the
+number of that would you expect from uniform random scatter. The counts for shorter
+regions will be more variable than those for longer regions. Also consider classifying
+the regions according to their number of counts.
+
+### Analysis
+First, we read in and set up the data for analysis.
+```{r}
+site <- as.numeric(unlist(read.table('hcmv.txt', header=TRUE)))
+```
+
+It is given that the CMV genome has length 229,354 (see slide 8 for citation if needed).
+```{r}
+N <- 229354
+```
+
+Next, we take a look at the "spread" of the CMV sequence.
+```{r}
+n.region <- 50
+stripplot(site, pch=16, cex=0.25)
+```
+No immediate patterns or trends are obvious.
+
+The following function, as given in the lab, returns the table necessary for chi-squared testing:
+```{r}
+chisqtable <- function(n.region, site, N){
+  n <- length(site)
+  lambda.est <- n/n.region
+  count.int <- table(cut(site, breaks = seq(1, length(gene), length.out=n.region+1), include.lowest=TRUE))
+  count.vector <- as.vector(count.int)
+  count.range <- max(count.vector) - min(count.vector) + 1
+  
+  table <- matrix(rep(NA, count.range*3), count.range, 3)
+  for (i in 1:count.range){
+    offset <- min(count.vector) - 1
+    table[i, 1] <- i + offset
+    table[i, 2] <- sum(count.vector == i + offset)
+    if ((i + offset == min(count.vector)) && (min(count.vector) != 0))
+      table[i, 3] <- ppois(i+offset, lambda.est)*n.region
+    else if (i + offset == max(count.vector))
+      table[i, 3] <- 1 - ppois(i + offset - 1, lambda.est)
+    else
+      table[i, 3] <- (ppois(i+offset, lambda.est) - ppois(i + offset - 1, lambda.est))*n.region
+  }
+  
+  return (table)
+}
+
+site.temp <- chisqtable(n.region, data, N)
+site.temp
+```
+
+We are now able to begin classifying the data. There are some counts that can be grouped together since many of the numbers of occurrences are small (e.g. the last several rows).
+```{r}
+data.tab <- matrix(rep(NA, 9*2), 9, 2)
+data.tab[1,] <- colSums(data.tabtemp[1:2, 2:3])
+data.tab[2:7,] <- data.tabtemp[3:8, 2:3]
+data.tab[8,] <- colSums(data.tabtemp[9:11, 2:3])
+data.tab[9,] <- colSums(data.tabtemp[12:14, 2:3])
+```
+
+Now that the data is properly set up for chi-squared testing, we run the statistical tests for the given CMV gene locations. The null hypothesis (with a significance level of 0.05) is that the gene locations are formed by random scatter; if there exists an unlikely cluster of palindromes such that it may be the origin of replication for the entire DNA sequence, then we will reject the null hypothesis and assume that cluster to be the origin of replication.
+```{r}
+data.stats <- sum((data.tab[,2] - data.tab[,1])^2/data.tab[,2])
+pchisq(data.stats, 5, lower.tail=FALSE)
+```
+We arrive at a final p-value of approximately .35--well above our initial significance level of 0.05. Thus, we fail to reject the null and conclude that there exists no cluster in the sequence so unlikely that we can be statistically certain that it is the origin of replication.
