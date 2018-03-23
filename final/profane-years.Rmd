@@ -1,0 +1,27 @@
+---
+title: "profane-years"
+author: "Sumeet Bansal"
+date: "March 22, 2018"
+output: pdf_document
+---
+
+## Question
+Does the level or categorization of profanity change over time? For example, how did toxicity change from 2000 to 2016? Were the number of toxic comments increase or decrease over time? And if these classifications/levels of profanity change significantly, can we use the year of a timestamped comment to better classify how profane that comment is? For example, if 2005 was a particularly toxic year for comments, could we make our classifier to take the particular toxicity of 2005 into account when deciding if a comment from 2005 is toxic or not?
+
+### Analysis
+First, we read in and set up the data for analysis.
+
+```{r}
+data <- read.csv('timestamped.csv', header=TRUE)
+data
+```
+
+As we can see, the vast majority of the comments are not profane in any way, as indicated by the percentages in the 'none' row for each year, all of which are greater than 90.9%.
+
+```{r}
+library(reshape2)
+df <- melt(data)
+df$rowid <- 1:7
+library(ggplot2)
+ggplot(df, aes(variable, value, group=factor(rowid))) + geom_line(aes(color=factor(rowid)))
+```

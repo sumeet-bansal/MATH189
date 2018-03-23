@@ -3,12 +3,15 @@ import pandas as pd
 train = pd.read_csv('train.csv', header=0)
 train = train[train['comment_text'].str.contains('UTC')]
 
+years = {}
+
 df = {}
 df['toxic'] = []
 df['severe_toxic'] = []
 df['obscene'] = []
 df['threat'] = []
 df['insult'] = []
+df['none'] = []
 df['identity_hate'] = []
 for i, row in train.iterrows():
 	ct = row['comment_text']
@@ -18,9 +21,16 @@ for i, row in train.iterrows():
 	if ct[eit-4:eit-2] != '20':
 		continue
 	year = int(ct[eit-4:eit])
+	if year not in years:
+		years[year] = 0
+	years[year] += 1
+	profane = False
 	for key in df:
-		if row[key] == 1:
+		if key != 'none' and row[key] == 1:
 			df[key].append(year)
+			profane = True
+	if not profane:
+		df['none'].append(year)
 
 minyear = 3000
 maxyear = -1
@@ -32,6 +42,10 @@ for key in df:
 	for y in range(minyear, maxyear + 1):
 		counts[y] = df[key].count(y)
 	df[key] = counts
+
+for key in df:
+	for y in df[key]:
+		df[key][y] /= years[y]
 
 with open('timestamped.csv', 'w') as csv:
 	csv.write('classification, %s\n' % str(list(df['toxic'].keys()))[1:-1])
