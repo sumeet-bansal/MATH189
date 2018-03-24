@@ -1,6 +1,7 @@
 import pandas as pd
 
-train = pd.read_csv('train.csv', header=0)
+file = 'train.csv'
+train = pd.read_csv(file, header=0)
 train = train[train['comment_text'].str.contains('UTC')]
 
 years = {}
@@ -43,11 +44,17 @@ for key in df:
 		counts[y] = df[key].count(y)
 	df[key] = counts
 
+with open('counts-' + file, 'w') as csv:
+	csv.write('classification, %s\n' % str(list(df['toxic'].keys()))[1:-1])
+	for key in df:
+		csv.write("%s, %s\n" % (key, str(list(df[key].values()))[1:-1]))
+
 for key in df:
 	for y in df[key]:
 		df[key][y] /= years[y]
 
-with open('timestamped.csv', 'w') as csv:
+del df['none']
+with open('percentage-' + file, 'w') as csv:
 	csv.write('classification, %s\n' % str(list(df['toxic'].keys()))[1:-1])
 	for key in df:
 		csv.write("%s, %s\n" % (key, str(list(df[key].values()))[1:-1]))

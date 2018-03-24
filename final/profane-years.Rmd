@@ -6,22 +6,38 @@ output: pdf_document
 ---
 
 ## Question
-Does the level or categorization of profanity change over time? For example, how did toxicity change from 2000 to 2016? Were the number of toxic comments increase or decrease over time? And if these classifications/levels of profanity change significantly, can we use the year of a timestamped comment to better classify how profane that comment is? For example, if 2005 was a particularly toxic year for comments, could we make our classifier to take the particular toxicity of 2005 into account when deciding if a comment from 2005 is toxic or not?
+Does the level or categorization of profanity change over time? For example, how did toxicity change from 2000 to 2016? Were the number of toxic comments increase or decrease over time? If these classifications/levels of profanity change significantly, we might be able to use the year of a timestamped comment as another factor to better classify how profane that comment is (e.g. if 2005 was a particularly toxic year for comments, our classifier could take the particular toxicity of 2005 into account when deciding if a comment from 2005 is toxic or not).
 
 ### Analysis
 First, we read in and set up the data for analysis.
 
 ```{r}
-data <- read.csv('timestamped.csv', header=TRUE)
+data <- read.csv('counts-train.csv', header=TRUE, check.names=FALSE)
+data
+```
+
+Given that we started with hundreds of thousands of data points and reduced that to several thousands of timestamped data points, our data is a fairly small sample of the original training data, and given that the overwhelming majority (>90%) of the comments are clean, we arrive at an extremely small sample of profane comments--small enough for a few comments to have a significant impact on our data and throw off our classifier. Notable example include comments flagged for "threat" (only a single "threatening" timestamped comment in the entire dataset) and comments flagged for "identity_hate" (only 7 such comments, spread out unevenly). As a result, we cannot use much of this data, and the potential inaccuries make a classifier that takes into account the year of a timestamped comment impractical.
+
+Of course, this is not unexpected, given the nature of such unstructured data. Another potential time-based exploration of the training dataset that we were considering was using specific times of day to better classify the profanity of a comment (e.g. if comments tend to be especially toxic or obscene in the evening versus), but this proved to be nearly impossible because of the level of precision required to extract the specific time of an unstructured comment. With better structured data (e.g. a separate column for "timestamp", such as with "id" and "comment_text"), such a line of inquiry would be more feasibly, but as it stands, such exploration of the data is impossible.
+
+However, for the sake of further exploration, let's take a look at the data for some more popular types of profanity such as toxicity ("toxic"), obscenity ("obscene"), and insults. We read in the data, this time formatted as what percentage of the total comments for that year each column was (e.g. if 5 comments out of 100 total in 2012 were flagged as "toxic", "toxic" = 0.05 for 2012). Of course, the sum of the percentages of each year is not usually equal to 1 since a comment can be classified as multiple types of profanity. We then remove the rows that are not of use, since we're only examining types of profanity that have a reasonable number of comments. To be specific, the rows that we would be left with would be "toxic", "obscene" and "insult" ("none" is removed in the Python script that generates the CSVs).
+
+```{r}
+data <- read.csv('percentage-train.csv', header=TRUE, check.names=FALSE)
+data <- data[-c(2, 4, 6),]
 data
 ```
 
 As we can see, the vast majority of the comments are not profane in any way, as indicated by the percentages in the 'none' row for each year, all of which are greater than 90.9%.
 
 ```{r}
-library(reshape2)
-df <- melt(data)
-df$rowid <- 1:7
-library(ggplot2)
-ggplot(df, aes(variable, value, group=factor(rowid))) + geom_line(aes(color=factor(rowid)))
+years <- seq(2002, 2016, by=1)
+toxicity <- as.numeric(data[1,][,-1])
+obscenity <- as.numeric(data[2,][,-1])
+insults <- as.numeric(data[3,][,-1])
+plot(x=years, y=toxicity, type='l')
+plot(x=years, y=obscenity, type='l')
+plot(x=years, y=insults, type='l')
 ```
+
+As we can see in the plots, toxicity levels gradually rise over the years, while obscenity and insult levels flunctuate seemingly randomly, although there is a noticeable spike in insults in 2012.
