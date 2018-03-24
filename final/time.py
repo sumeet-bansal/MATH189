@@ -1,11 +1,15 @@
-import pandas as pd
+'''
+Author: Sumeet Bansal
+Title: Time-Based Analysis of Comments
+'''
 
+# reads in the training dataset and retains the timetamped comments
+import pandas as pd
 file = 'train.csv'
 train = pd.read_csv(file, header=0)
 train = train[train['comment_text'].str.contains('UTC')]
 
-years = {}
-
+# sets up dict of timestamped comments, key=profanity type, value=count for each year
 df = {}
 df['toxic'] = []
 df['severe_toxic'] = []
@@ -33,6 +37,7 @@ for i, row in train.iterrows():
 	if not profane:
 		df['none'].append(year)
 
+# determines the counts per year for each profanity type
 minyear = 3000
 maxyear = -1
 for key in df:
@@ -44,15 +49,18 @@ for key in df:
 		counts[y] = df[key].count(y)
 	df[key] = counts
 
+# writes the counts to a .csv
 with open('counts-' + file, 'w') as csv:
 	csv.write('classification, %s\n' % str(list(df['toxic'].keys()))[1:-1])
 	for key in df:
 		csv.write("%s, %s\n" % (key, str(list(df[key].values()))[1:-1]))
 
+# determines the percentages per year for each profanity type
 for key in df:
 	for y in df[key]:
 		df[key][y] /= years[y]
 
+# writes the percentages to a .csv
 del df['none']
 with open('percentage-' + file, 'w') as csv:
 	csv.write('classification, %s\n' % str(list(df['toxic'].keys()))[1:-1])
