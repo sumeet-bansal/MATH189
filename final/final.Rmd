@@ -1,0 +1,411 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+data <- read.csv('~/Downloads/train.csv', header=TRUE, check.names=FALSE)
+```
+
+```{r}
+data
+```
+
+```{r}
+library(stringr)
+?vector
+txt = as.character(data$comment_text)
+length(txt)
+modify = function(x){
+  lapply(strsplit(x, "[, .?\n;!()\\\"-]+"), tolower)
+}
+split_txt = lapply(txt, modify)
+
+get_percent = function(x){
+  length(str_match_all(x,"[A-Z]")[[1]])/str_length(x)[[1]]
+}
+
+percent_caps = vector(length = length(txt))
+lll = 1
+for (i in txt){
+  percent_caps[lll] = get_percent(i)
+  lll = lll + 1
+  if (lll %% 10000 == 0){
+    print(lll)
+  }
+}
+length(percent_caps)
+
+```
+
+```{r}
+block = .01
+oup = vector(length = 1/block)
+oup2 = vector(length = 1/block)
+oup[[1]] = 0
+oup2[[1]] = 0
+
+bounds = seq.int(form = 0, to = 100, by = 1)*block
+
+for (i in seq_along(percent_caps)){
+  for (j in seq_along(bounds)){
+    if (bounds[j] > percent_caps[i]){
+      oup[j] = (oup[j]*oup2[j] + data$toxic[i])/(oup2[j] + 1)
+      oup2[j] = oup2[j] + 1
+      break
+    }
+  }
+}
+
+oup
+bounds
+plot(bounds, oup, xlab = 'percentage caps', ylab = 'chance of toxic')
+lines(c(0.5302972,0.5302972), c(0,1), col = 'red')
+lines(c(0,1), c(.5,.5))
+curve(.88*x+.13, add = TRUE)
+
+
+cor(bounds, oup, method="spearman")
+
+mod = lm(bounds ~ oup)
+summary(mod)
+
+library(rpart)
+set.seed(18107)
+train_ind <- sample(length(percent_caps), size = round(length(percent_caps)*1/10), replace = TRUE)
+
+train = data.frame(percent = percent_caps[train_ind], toxic = data$toxic[train_ind])
+test = data.frame(percent = percent_caps[-train_ind], toxic = data$toxic[-train_ind])
+
+tr = rpart(factor(toxic) ~ percent , data=train, method = "anova")
+plot(tr);text(tr)
+
+
+f = function(x, n){
+  ret = 0
+  for (i in seq_along(train$percent)){
+    if (train$percent[i] < x){
+      ret = ret + n*train$toxic[i] 
+    }
+    else{
+      ret = ret + (1 - train$toxic[i])
+    }
+  }
+  ret
+}
+f1 = function(x){
+  f(x,1)
+}
+opt = optimize(f1, c(0,1))$minimum
+.00003/sqrt(var(train$toxic)/159571)
+```
+say that using all the words was overfitting
+
+```{r}
+
+g = function(dset, sp){
+  thresh = sp
+  perc = dset$percent
+  tox = dset$toxic
+  ret = 0
+  len = 0
+  for (i in seq_along(tox)){
+    if (perc[i] < thresh){
+      if(tox[i] == 0){
+        ret = ret + 1
+      }
+      len = len + 1
+    }else{
+      if(tox[i] == 1){
+       ret = ret + 1
+      }
+      len = len + 1
+    }
+  }
+  ret/len
+}
+g(test, opt)
+
+sum(1-test$toxic)/length(test$toxic)
+
+s = seq.int(form = 0, to = 5, by = .02)-3
+r = c()
+for (i in s){
+  fi = function (x) {f(x,exp(i))}
+  br = optimize(fi, c(0,1))$minimum
+  
+  r = c(r, g(test, br))
+  print(i)
+}
+plot(s,r,xlab = 'Weight  of Catagorising Normal Correctly', ylab = 'Percent Correct', type = 'n')
+lines(s,r)
+lines(c(0,0),c(.8,1), col = 'red')
+```
+
+
+```{r}
+library(stringr)
+t = txt[[9]]
+lapply(strsplit(t, "[, .?\n;!()\\\"-]+"), tolower)
+percent  = length(str_match_all(t,"[A-Z]")[[1]])/str_length(t)
+percent
+str_length(t)
+```
+```{r}
+percent_caps[[4]]
+split_txt[[1]]
+```
+
+```{r}
+words = read.csv('~/Desktop/badwords',header = FALSE)$V1
+length(words)
+```
+
+
+```{r}
+?vector
+g = function(colname){
+  l = 0
+  ret = vector(length = length(split_txt))
+  for (i in split_txt){
+      j = i[[1]]
+      if (is.element(colname,j)){
+          ret[l] = 1
+      }
+      else{
+          ret[l] = 0
+      }
+      l = l + 1
+      #if (l%% 5000 == 0){
+      #  print(l)
+      #}
+  }
+  ret
+}
+
+g("ass")
+
+```
+
+```{r}
+?vector
+g = function(colname){
+  l = 0
+  ret = vector(length = length(split_txt))
+  for (i in split_txt){
+      j = i[[1]]
+      ret[l] = sum(j == colname)
+      l = l + 1
+      #if (l%% 5000 == 0){
+      #  print(l)
+      #}
+  }
+  ret
+}
+
+g("ass")
+```
+
+
+```{r}
+dataset = data.frame(percent = percent_caps)
+
+li = 2
+for (w in words){
+  
+  dataset[w] = g(w)
+  
+  
+  if (li %% 10 == 0){
+    print(li)
+  }
+  li = li + 1
+  
+}
+
+dataset$toxic = data$toxic
+dataset$severe_toxic = data$severe_toxic
+dataset$obscene = data$obscene
+dataset$threat = data$threat
+dataset$insult = data$insult
+dataset$identity_hate = data$identity_hate
+
+
+dataset
+```
+
+```{r}
+#colinarity for thing
+
+library(usdm)
+vif(dataset)
+```
+
+
+```{r}
+set.seed(123)
+train_ind <- sample(seq_len(nrow(dataset)), size = round(length(dataset$percent)*9/10), replace = TRUE)
+
+train = dataset[train_ind, ]
+test = dataset[-train_ind, ]
+```
+
+
+```{r}
+mod_tox = lm(toxic ~ anal + anus + arse + ass + asshole + ballsack + balls + bastard + bitch + biatch + bloody + blowjob + bollock + bollok + boner + boob + bugger + bum + butt + buttplug + clitoris + cock + coon + crap + cunt + clusterfuck + cum + damn + dick + dildo + dyke + fag + feck + fellate + fellatio + felching + fuck + fucker + fuckface + fuckhead + fuckin + fucking + fuckwit + fudgepacker + flange + Goddamn + hell + homo + jerk + jizz + knobend + knob + labia + lmao + lmfao + muff + nigger + nigga + omg + penis + piss + poop + prick + pube + pussy + queer + scrotum + sex + shit + sh1t +slut + smegma + spunk + tit + tosser + turd + twat + vagina + wank + whore + hate + kill + murder + rape + destroy + wanking + shitfaced + shithead + prick + motherfucker + bareback + boobs + booobs + boooobs + booooobs + booooooobs + breasts + buceta + cuntbag + cuntlicking + facial + heshe + hoar + hoare + hoer + homo
+#          , family = binomial(link = "logit")
+          , data = train)
+
+summary(mod_tox)
+library(mctest)
+omcdiag(X,train)
+
+pre = predict(mod_tox, test)
+tst_pre = test$toxic
+out = 0
+
+for (i in seq_along(pre)){
+  if (pre[[i]] > .5){
+    if (tst_pre[[i]] == 1){
+      out = out + 1
+    }
+  }else{
+    if (tst_pre[[i]] == 0){
+      out = out + 1
+    }
+  }
+}
+
+out/length(pre)
+sum(1-tst_pre)/length(pre)
+```
+
+
+```{r}
+install.packages("usdm")
+library(tree)
+
+tr = tree(factor(toxic) ~ percent , data=train)
+summary(tr)
+plot(tr); text(tr)
+tr.pred = predict(tr, newdata = test)
+
+pre = tr.pred[,2]
+
+tst_pre = train$toxic
+out = 0
+
+for (i in seq_along(pre)){
+  if (pre[[i]] >= .5){
+    if (tst_pre[[i]] == 1){
+      out = out + 1
+    }
+  }else{
+    if (tst_pre[[i]] == 0){
+      out = out + 1
+    }
+  }
+}
+
+out/length(test$toxic)
+sum(1-test$toxic)/length(test$toxic)
+tr.pred
+out
+```
+
+```{r}
+tr = tree(factor(threat) ~ anal + anus + arse + ass + asshole + ballsack + balls + bastard + bitch + biatch + bloody + blowjob + bollock + bollok + boner + boob + bugger + bum + butt + buttplug + clitoris + cock + coon + crap + cunt + clusterfuck + cum + damn + dick + dildo + dyke + fag + feck + fellate + fellatio + felching + fuck + fucker + fuckface + fuckhead + fuckin + fucking + fuckwit + fudgepacker + flange + Goddamn + hell + homo + jerk + jizz + knobend + knob + labia + lmao + lmfao + muff + nigger + nigga + omg + penis + piss + poop + prick + pube + pussy + queer + scrotum + sex + shit + sh1t +slut + smegma + spunk + tit + tosser + turd + twat + vagina + wank + whore + hate + kill + murder + rape + destroy + wanking + shitfaced + shithead + prick + motherfucker + bareback + boobs + booobs + boooobs + booooobs + booooooobs + breasts + buceta + cuntbag + cuntlicking + facial + heshe + hoar + hoare + hoer + homo, data=train)
+summary(tr)
+plot(tr); text(tr)
+```
+
+
+
+
+
+```{r}
+mod_sevtox = lm(severe_toxic ~ percent + anal + anus + ass + balls + bastard + cunt + dick + hell +  kill + breasts
+#          , family = binomial(link = "logit")
+          , data = train)
+
+summary(mod_sevtox)
+
+pre = predict(mod_sevtox, train)
+tst_pre = train$severe_toxic
+out = 0
+
+for (i in seq_along(pre)){
+  if (pre[[i]] > .5){
+    if (tst_pre[[i]] == 1){
+      out = out + 1
+    }
+  }else{
+    if (tst_pre[[i]] == 0){
+      out = out + 1
+    }
+  }
+}
+
+out/length(pre)
+sum(1-tst_pre)/length(pre)
+pre
+```
+
+
+```{r}
+mod_obs = glm(obscene ~ percent + anal + anus + arse + ass + asshole + ballsack + balls + bastard + bitch + biatch + bloody + blowjob + bollock + bollok + boner + boob + bugger + bum + butt + buttplug + clitoris + cock + coon + crap + cunt + clusterfuck + cum + damn + dick + dildo + dyke + fag + feck + fellate + fellatio + felching + fuck + fucker + fuckface + fuckhead + fuckin + fucking + fuckwit + fudgepacker + flange + Goddamn + hell + homo + jerk + jizz + knobend + knob + labia + lmao + lmfao + muff + nigger + nigga + omg + penis + piss + poop + prick + pube + pussy + queer + scrotum + sex + shit + sh1t +slut + smegma + spunk + tit + tosser + turd + twat + vagina + wank + whore + hate + kill + murder + rape + destroy + wanking + shitfaced + shithead + prick + motherfucker + bareback + boobs + booobs + boooobs + booooobs + booooooobs + breasts + buceta + cuntbag + cuntlicking + facial + heshe + hoar + hoare + hoer + homo,
+#          , family = binomial(link = "logit")
+          , data = train)
+
+summary(mod)
+
+pre = predict(mod_obs, train)
+tst_pre = train$obscene
+out = 0
+
+for (i in seq_along(pre)){
+  if (pre[[i]] > .5){
+    if (tst_pre[[i]] == 1){
+      out = out + 1
+    }
+  }else{
+    if (tst_pre[[i]] == 0){
+      out = out + 1
+    }
+  }
+}
+
+out/length(pre)
+sum(1-tst_pre)/length(pre)
+pre
+```
+
+
+```{r}
+mod_thr = glm(identity_hate ~ percent + anal + anus + arse + ass + asshole + ballsack + balls + bastard + bitch + biatch + bloody + blowjob + bollock + bollok + boner + boob + bugger + bum + butt + buttplug + clitoris + cock + coon + crap + cunt + clusterfuck + cum + damn + dick + dildo + dyke + fag + feck + fellate + fellatio + felching + fuck + fucker + fuckface + fuckhead + fuckin + fucking + fuckwit + fudgepacker + flange + Goddamn + hell + homo + jerk + jizz + knobend + knob + labia + lmao + lmfao + muff + nigger + nigga + omg + penis + piss + poop + prick + pube + pussy + queer + scrotum + sex + shit + sh1t +slut + smegma + spunk + tit + tosser + turd + twat + vagina + wank + whore + hate + kill + murder + rape + destroy + wanking + shitfaced + shithead + prick + motherfucker + bareback + boobs + booobs + boooobs + booooobs + booooooobs + breasts + buceta + cuntbag + cuntlicking + facial + heshe + hoar + hoare + hoer + homo,
+#          , family = binomial(link = "logit")
+          , data = train)
+
+summary(mod)
+
+pre = predict(mod_thr, test)
+tst_pre = test$threat
+out = 0
+
+for (i in seq_along(pre)){
+  if (pre[[i]] > .5){
+    if (tst_pre[[i]] == 1){
+      out = out + 1
+    }
+  }else{
+    if (tst_pre[[i]] == 0){
+      out = out + 1
+    }
+  }
+}
+
+out/length(pre)
+sum(1-tst_pre)/length(pre)
+```
+
+
